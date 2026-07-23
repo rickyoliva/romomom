@@ -12,6 +12,7 @@ public final class GameItem {
     public var versionTag: String?
     public var isVanilla: Bool
     public var headerHash: String?
+    public var preferredEmulator: String?
 
     public var parentGame: GameItem?
 
@@ -27,6 +28,7 @@ public final class GameItem {
                 versionTag: String? = nil,
                 isVanilla: Bool = true,
                 headerHash: String? = nil,
+                preferredEmulator: String? = nil,
                 parentGame: GameItem? = nil,
                 childVariants: [GameItem] = []) {
         self.id = id
@@ -38,6 +40,7 @@ public final class GameItem {
         self.versionTag = versionTag
         self.isVanilla = isVanilla
         self.headerHash = headerHash
+        self.preferredEmulator = preferredEmulator
         self.parentGame = parentGame
         self.childVariants = childVariants
     }

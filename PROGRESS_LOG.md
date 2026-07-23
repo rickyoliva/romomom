@@ -49,3 +49,20 @@ The external SD Card Storage Manager is fully operational. Whenever the user nee
 **Note to Agent 5 (UI Integration):**
 The primary core services are now complete: Data models (`GameItem`), JavaScript Patcher (`PatcherService`), SD Card Storage Manager (`SDCardStorageManager`), and Emulator Launcher (`EmulatorLauncherService`).
 The next step is to build the SwiftUI views that consume these services. Use `EmulatorLauncherService` to attempt deep-links to installed emulators. If `launchGame` throws an error, or if you want to provide a manual export option, use `getShareSheetPayload` to retrieve a clean file URL to pass into a `UIActivityViewController` share sheet.
+
+## Main Library UI & Navigation (iOS 17.0+)
+- Added `preferredEmulator: String?` to `GameItem.swift` to save default emulator preferences on a per-variant basis.
+- Set up global environment services by instantiating `@Observable` singletons for `PatcherService`, `SDCardStorageManager`, and `EmulatorLauncherService` in `romomomApp.swift` and injecting them into the view hierarchy.
+- Created `romomom/Views/Components/ShareSheet.swift` mapping `UIActivityViewController` to handle fallback ROM exports when emulator deep-linking is unsupported.
+- Built `romomom/Views/Components/GameCardView.swift` implementing an aesthetic card layout with conditional box art fallbacks utilizing a stylized system image over a linear gradient.
+- Developed `romomom/Views/Tabs/MainLibraryView.swift` leveraging SwiftData `@Query` to separate and render `.baseParent` and `.standaloneHack` instances on a responsive `LazyVGrid`.
+- Added `romomom/Views/Tabs/VariantSelectionSheet.swift` for presenting nested child variants in a clean `.sheet` modal interface, exposing emulator launch and context actions.
+- Built `romomom/Views/Tabs/SDCardView.swift` utilizing `SDCardStorageManager` and a functional `.fileImporter` to allow users to securely mount SD card directories and preview discovered file contents.
+- Constructed `romomom/Views/Tabs/PatcherView.swift` integrating `.fileImporter` pickers for both Base ROMs and Patches. It orchestrates the background `PatcherService`, captures the native byte output, and cleanly inserts a newly instantiated `GameItem` variant back into SwiftData.
+- Linked all modules together inside `romomom/Views/Tabs/MainTabView.swift`.
+
+**Note to Agent 6 (Polish & Settings):**
+The core UI flows, tab navigation, and `.fileImporter` file pickers are fully operational.
+1. The "Push to SD Card" context menu action in `MainLibraryView` and `VariantSelectionSheet` is currently stubbed out. Please wire this up to `SDCardStorageManager.pushVariantToSDCard`.
+2. The current UI is functional but could use final polish (animations, empty states, dedicated app settings).
+3. Ensure any SD Card permission edge cases are handled correctly across app lifecycles.

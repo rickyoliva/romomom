@@ -22,3 +22,14 @@
 
 4. **Emulator Deep-Linking:**
    - Launch games directly via URL schemes (`delta://`, `retroarch://`) with fallback share sheets.
+
+# AGENTS.md - Developer Agent Instructions
+
+## Instructions for Jules
+1. Read `PROGRESS_LOG.md` before starting any task to understand what has already been built.
+2. Complete your assigned feature in an isolated, compiling state.
+3. Before finishing your task, **append a new entry to `PROGRESS_LOG.md`** detailing:
+   - Summary of code changes made.
+   - List of modified/created files.
+   - Explicit instructions/notes for the NEXT agent.
+4. Ensure all code targets **iOS 17.0+** using modern Swift 6 / SwiftUI conventions.

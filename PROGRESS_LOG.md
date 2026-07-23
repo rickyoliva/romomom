@@ -25,3 +25,15 @@ The primary data models are now in place. `GameItem` instances will act as the s
 
 **Note to Agent 3 (Security-Scoped SD Card Storage Manager):**
 The `PatcherService` is complete and handles all raw bytes/file conversion via `RomPatcher.js`. It writes resulting patched ROMs directly to the App Sandbox temp directory. As you build the External SD Card Management, ensure that whenever a patch is applied to a base game stored externally on an SD card, the resulting patched file is moved from the temporary directory into either local app storage or the SD card (based on your architecture decisions). Ensure all SD card access retains security-scoped URL bookmarks correctly.
+
+## Security-Scoped External SD Card Storage Manager (iOS 17.0+)
+- Created `romomom/Services/SDCardStorageManager.swift` using the `@Observable` macro to manage external SD card operations via Lightning/USB-C adapters.
+- Implemented persistent security-scoped bookmark loading/saving logic utilizing `UserDefaults` so the app maintains continuous access to the selected external directory across launches.
+- Added `getDestinationFolder(for console: String)` to resolve or automatically create destination directories like `/roms/nds` and `/roms/gba` on the SD card root.
+- Created `pushVariantToSDCard(variant: GameItem, destinationConsoleFolder: String)` which implements granular file copying via atomic operations (copies file to a `.tmp` file on target directory, then securely renames/moves it to final destination).
+- Implemented `getExistingSDCardFiles(for console: String)` to perform a shallow directory listing to support pre-transfer diffing/conflict checking.
+- Ensured all file operations robustly wrap `.startAccessingSecurityScopedResource()` and `.stopAccessingSecurityScopedResource()` in `defer` blocks to prevent external storage access leaks.
+- Designed comprehensive error handling through an `SDCardError` enum (e.g. `.bookmarkFailed`, `.accessDenied`, `.fileAlreadyExists`, `.sourceFileNotFound`, `.transferFailed`).
+
+**Note to Agent 4 (Emulator Deep-Linking Launcher Service):**
+The external SD Card Storage Manager is fully operational. Whenever the user needs to launch a game stored on the external SD card, use `SDCardStorageManager` to resolve and provide access to the file paths. Emulators launched via deep-linking might require access to these resolved security-scoped URLs or path translations depending on their exact capabilities. Keep in mind that some external SD card files might require a fallback share sheet if deep-linking is unsupported or access fails.

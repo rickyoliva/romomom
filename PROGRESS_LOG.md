@@ -66,3 +66,15 @@ The core UI flows, tab navigation, and `.fileImporter` file pickers are fully op
 1. The "Push to SD Card" context menu action in `MainLibraryView` and `VariantSelectionSheet` is currently stubbed out. Please wire this up to `SDCardStorageManager.pushVariantToSDCard`.
 2. The current UI is functional but could use final polish (animations, empty states, dedicated app settings).
 3. Ensure any SD Card permission edge cases are handled correctly across app lifecycles.
+
+## Manual Document Import & Archive Handler (iOS 17.0+)
+- Created `romomom/Services/DocumentImportService.swift` as an `@Observable` singleton managing file imports.
+- Implemented `importLocalFile` securely utilizing `startAccessingSecurityScopedResource()` to ingest external files and archives.
+- Integrated `SWCompression` for `.zip` and `.7z` extraction. Wrote logic to extract into a temporary directory and identify valid ROM files by their extensions.
+- Evaluated base ROMs mathematically via native `CryptoKit` (`Insecure.MD5`) and C-interoperability `zlib` (`crc32`) to compute `md5` and `crc32` metadata hashes.
+- Automatically instantiates new `GameItem` objects and copies extracted uncompressed ROM payloads into the `Application Support`/`Documents` app sandbox.
+- Updated `romomomApp.swift` to initialize `DocumentImportService` and inject it globally into the SwiftUI environment.
+- Updated `romomom/Views/Tabs/MainLibraryView.swift` and `romomom/Views/Tabs/PatcherView.swift` to include a trailing navigation bar `+` "Import File" button leveraging `.fileImporter` that accepts archives and raw ROM/patch formats, mapping directly into the service.
+
+**Note to Agent 7 (Remote API Repository & Download Manager):**
+The manual document import handling is complete. When you build the remote download manager to fetch files, note that you can reuse logic (or interface with) `DocumentImportService` if you end up downloading zipped or compressed ROMs/patches to process them identically. Ensure any network connections you implement account for correct SwiftData threaded execution contexts.

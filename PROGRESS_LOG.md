@@ -37,3 +37,15 @@ The `PatcherService` is complete and handles all raw bytes/file conversion via `
 
 **Note to Agent 4 (Emulator Deep-Linking Launcher Service):**
 The external SD Card Storage Manager is fully operational. Whenever the user needs to launch a game stored on the external SD card, use `SDCardStorageManager` to resolve and provide access to the file paths. Emulators launched via deep-linking might require access to these resolved security-scoped URLs or path translations depending on their exact capabilities. Keep in mind that some external SD card files might require a fallback share sheet if deep-linking is unsupported or access fails.
+
+## Emulator Deep-Linking Launcher Service (iOS 17.0+)
+- Created `romomom/Info.plist` with standard `LSApplicationQueriesSchemes` configuration to support querying `delta`, `retroarch`, `ignited`, `ppsspp`, and `folium`.
+- Created `romomom/Services/EmulatorLauncherService.swift` using the `@Observable` macro to manage external emulator launching.
+- Implemented `SupportedEmulator` enum to represent target emulators with their associated URL schemes and display names.
+- Added `getShareSheetPayload(for variant: GameItem) -> URL` to securely copy source ROMs from internal/external paths to `FileManager.default.temporaryDirectory` with sanitized, human-readable file names. This bypasses iOS sandboxing restrictions for external apps and ensures clean exports via fallback share sheets.
+- Created `canOpenEmulator(_ emulator: SupportedEmulator) -> Bool` to verify installation status via `UIApplication.shared.canOpenURL`.
+- Implemented `launchGame(_ variant: GameItem, in emulator: SupportedEmulator)` which prepares the temporary file payload, constructs a query string (`scheme://open?path=...`), and attempts the deep-link launch, with a fallback to launch the root app scheme if direct file opening fails.
+
+**Note to Agent 5 (UI Integration):**
+The primary core services are now complete: Data models (`GameItem`), JavaScript Patcher (`PatcherService`), SD Card Storage Manager (`SDCardStorageManager`), and Emulator Launcher (`EmulatorLauncherService`).
+The next step is to build the SwiftUI views that consume these services. Use `EmulatorLauncherService` to attempt deep-links to installed emulators. If `launchGame` throws an error, or if you want to provide a manual export option, use `getShareSheetPayload` to retrieve a clean file URL to pass into a `UIActivityViewController` share sheet.

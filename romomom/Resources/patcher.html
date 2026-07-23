@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Patcher</title>
+    <!-- Include RomPatcher.js core and required modules -->
+    <script src="rom-patcher-js/RomPatcher.js"></script>
+    <script src="rom-patcher-js/modules/BinFile.js"></script>
+    <script src="rom-patcher-js/modules/HashCalculator.js"></script>
+    <script src="rom-patcher-js/modules/RomPatcher.format.ips.js"></script>
+    <script src="rom-patcher-js/modules/RomPatcher.format.bps.js"></script>
+    <script src="rom-patcher-js/modules/RomPatcher.format.vcdiff.js"></script>
+
+    <script>
+        // We will communicate with Swift via webkit.messageHandlers
+
+        async function applyPatch(baseRomBase64, patchBase64, patchType) {
+            try {
+                // Convert base64 to Uint8Array
+                const baseRomBuffer = _base64ToUint8Array(baseRomBase64);
+                const patchBuffer = _base64ToUint8Array(patchBase64);
+
+                const baseRomFile = new BinFile(baseRomBuffer);
+                const patchFile = new BinFile(patchBuffer);
+
+                let patch;
+                if (patchType === "ips") {
+                    patch = new RomPatcher.format.ips(patchFile);
+                } else if (patchType === "bps") {
+                    patch = new RomPatcher.format.bps(patchFile);
+                } else if (patchType === "xdelta") {
+                    patch = new RomPatcher.format.vcdiff(patchFile);
+                } else {
+                    throw new Error("Unsupported patch type");
+                }
+
+                // Allow UI thread to breathe by using setTimeout or Promise
+                await new Promise(r => setTimeout(r, 0));
+
+                const patchedFile = RomPatcher.applyPatch(baseRomFile, patch);
+
+                // Convert Uint8Array back to Base64 to pass to Swift
+                const u8array = patchedFile.getU8Array ? patchedFile.getU8Array() : patchedFile.fileData;
+                const patchedBase64 = _uint8ArrayToBase64(u8array);
+
+                window.webkit.messageHandlers.patchHandler.postMessage({
+                    status: "success",
+                    data: patchedBase64
+                });
+            } catch (error) {
+                window.webkit.messageHandlers.patchHandler.postMessage({
+                    status: "error",
+                    message: error.message || String(error)
+                });
+            }
+        }
+
+        function _base64ToUint8Array(base64) {
+            var binary_string = window.atob(base64);
+            var len = binary_string.length;
+            var bytes = new Uint8Array(len);
+            for (var i = 0; i < len; i++) {
+                bytes[i] = binary_string.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        function _uint8ArrayToBase64(bytes) {
+            var binary = '';
+            var len = bytes.byteLength;
+            for (var i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
+    </script>
+</head>
+<body>
+</body>
+</html>

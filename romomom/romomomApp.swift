@@ -16,10 +16,17 @@ struct romomomApp: App {
         }
     }()
 
+    @State private var patcherService = PatcherService()
+    @State private var sdCardStorageManager = SDCardStorageManager()
+    @State private var emulatorLauncherService = EmulatorLauncherService()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
         }
         .modelContainer(sharedModelContainer)
+        .environment(patcherService)
+        .environment(sdCardStorageManager)
+        .environment(emulatorLauncherService)
     }
 }

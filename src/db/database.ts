@@ -18,7 +18,8 @@ export const initDb = async () => {
             parentGameId TEXT,
             localFilePath TEXT NOT NULL,
             customBoxArtPath TEXT,
-            console TEXT NOT NULL CHECK(console IN ('GBA', 'NDS', 'GBC', 'NES', 'SNES')),
+            console TEXT NOT NULL CHECK(console IN ('GBA', 'NDS', 'GBC', 'NES', 'SNES', 'Unknown')),
+            fileHash TEXT,
             updatedAt INTEGER NOT NULL,
             FOREIGN KEY (parentGameId) REFERENCES games (id) ON DELETE CASCADE
         );

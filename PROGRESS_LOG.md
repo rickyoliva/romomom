@@ -105,3 +105,15 @@ The Expo environment is initialized and ready. Your primary task is to port the 
 
 **Note to Agent 3 (File Storage & External SD Card Manager):**
 The SQLite database and the native JS patcher are complete. The patcher successfully writes outputs to the app's document directory via `expo-file-system`. As you build the File Storage & External SD Card Manager, ensure you handle cross-referencing these paths. When moving patched ROMs or interacting with SD cards via native bridging, coordinate with the paths stored in SQLite (`localFilePath`). Ensure external files securely sync or copy locally before patching, or natively support streaming into the patcher buffer array.
+
+## File Import & Storage Service (Expo / React Native)
+- Updated `games` SQLite table schema to support `'Unknown'` console types and a new `fileHash` field for ROM validation.
+- Built `src/services/storageService.ts` to manage document selection via `expo-document-picker`.
+- Handled raw and archived (`.zip`) ROM imports using `expo-file-system`, `jszip`, and `buffer` to safely extract payload binaries into the app's document directory (`/roms`).
+- Calculated MD5 hashes natively via `expo-crypto` during the ingest process and logged the resulting `Game` to SQLite.
+- Developed `src/services/emulatorLauncherService.ts` to orchestrate app deep-linking via `expo-linking` for emulators like Delta, RetroArch, Ignited, PPSSPP, and Folium.
+- Integrated a seamless fallback to the native share sheet via `expo-sharing` if a target emulator scheme fails or is uninstalled.
+- Wired up a preliminary UI in `app/(tabs)/storage.tsx` to validate file picking, database insertions, directory listings, storage statistics reporting, and launcher functionality.
+
+**Note to Agent 4 (Library Grid & UI Integration):**
+The core underlying services are complete (DB, Patcher, Storage, Emulator Launcher). Your job is to build the visual Library Grid (`app/(tabs)/index.tsx`). Use `getAllGames()` and `getVariantsForParent()` from the `gameRepository` to populate the list. Hook up user taps on game items to trigger `launchGame(localFilePath, emulatorScheme)` from the `emulatorLauncherService`. Ensure the UI gracefully handles both standalone and parent/child variant relationships visually.

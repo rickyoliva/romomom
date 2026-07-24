@@ -94,3 +94,14 @@ The manual document import handling is complete. When you build the remote downl
 
 **Note to Agent 2 (Core Data Schema & Direct JS Patcher):**
 The Expo environment is initialized and ready. Your primary task is to port the SwiftData `GameItem` schema over to `expo-sqlite` (or a chosen state wrapper like Zustand if you prefer purely local app sandbox storage without sqlite). Additionally, you must implement the direct JavaScript patching service. Note the architecture rule change: we no longer use a hidden WebView (`WKWebView`). `RomPatcher.js` must be adapted or executed natively in the React Native JS thread.
+
+## Core Data Schema & Direct JS Patcher (Expo / React Native)
+- Established the SQLite storage layer in `src/db/database.ts` and `src/db/gameRepository.ts` using `expo-sqlite`.
+- Defined the `games` table schema supporting base parent folders, standalone hacks, and child variants, adhering to the requested fields (id, title, displayType, parentGameId, localFilePath, customBoxArtPath, console, updatedAt).
+- Implemented core CRUD repository methods: `getAllGames()`, `getVariantsForParent()`, `insertGame()`, and `deleteGame()`.
+- Built the Pure JavaScript Patcher Service in `src/services/patcherService.ts`.
+- Integrated Marc Robledo's `RomPatcher.js` natively into the JS environment, converting the previously WebView-bound process into direct node/expo JS execution.
+- Configured the patcher to read `.bps` and `.ips` binaries using `expo-file-system`, process patches using TypedArrays/ArrayBuffers, save outputs natively, and log the generated variant to SQLite.
+
+**Note to Agent 3 (File Storage & External SD Card Manager):**
+The SQLite database and the native JS patcher are complete. The patcher successfully writes outputs to the app's document directory via `expo-file-system`. As you build the File Storage & External SD Card Manager, ensure you handle cross-referencing these paths. When moving patched ROMs or interacting with SD cards via native bridging, coordinate with the paths stored in SQLite (`localFilePath`). Ensure external files securely sync or copy locally before patching, or natively support streaming into the patcher buffer array.

@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl, TextInput, Button, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, TextInput, Button, Alert, Text } from 'react-native';
 import { Stack, useFocusEffect, router } from 'expo-router';
 import { getAllGames, getVariantsForParent, Game, deleteGame, updateGame } from '../../src/db/gameRepository';
 import { importFileFromPicker, deleteStoredFile } from '../../src/services/storageService';
 import { GameCard } from '../../src/components';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export default function LibraryTab() {
   const [games, setGames] = useState<Game[]>([]);

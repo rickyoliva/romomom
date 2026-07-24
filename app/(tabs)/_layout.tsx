@@ -21,6 +21,12 @@ export default function TabLayout() {
           title: 'Patcher',
         }}
       />
+      <Tabs.Screen
+        name="discover"
+        options={{
+          title: 'Discover',
+        }}
+      />
     </Tabs>
   );
 }

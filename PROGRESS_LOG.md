@@ -132,3 +132,10 @@ The core underlying services are complete (DB, Patcher, Storage, Emulator Launch
 
 **Note to Agent 5 (Remote API Repository & Download Manager):**
 The primary offline library and UI views are complete. The `GameCard` correctly handles cases where a base ROM file is missing (e.g., deleted to save space) while retaining its variants. As you implement remote downloads, ensure that downloaded ROMs or patches cleanly map back to these structures. If a user downloads a base ROM they previously deleted, update the existing `Game` record's `localFilePath` via `updateGame` rather than creating a duplicate entry.
+
+## Remote API Repository & Download Manager (Expo / React Native)
+- Connected `src/services/apiService.ts` to `https://db.universal-team.net/data/full.json`. Mapped item properties to `RemoteRepoItem` with strict type checking.
+- Developed the Download Manager in `src/services/downloadService.ts` leveraging `FileSystem.createDownloadResumable` from `expo-file-system/legacy` to handle file downloads with live 0-100% progress hooks.
+- Implemented automatic `.zip` extraction for fetched ROMs/Patches using `jszip`, routing `.gba`, `.nds`, etc. to `roms/` and `.ips`, `.bps` to `patches/`.
+- Integrated a new "Discover" tab (`app/(tabs)/discover.tsx`) for searching and browsing the community repository. Includes progress bars during active downloads.
+- Integrated an intelligent patching loop in the Discover view: When a patch download completes, the DB is queried. If a matching base ROM is found, the user is immediately prompted to apply the patch via the `patcherService`.

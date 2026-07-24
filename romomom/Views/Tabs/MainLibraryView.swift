@@ -7,6 +7,7 @@ struct MainLibraryView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(EmulatorLauncherService.self) private var emulatorService
+    @Environment(DocumentImportService.self) private var documentImportService
 
     @State private var selectedParentGame: GameItem?
 
@@ -16,6 +17,7 @@ struct MainLibraryView: View {
     @State private var shareURL: URL?
     @State private var errorMessage: String?
     @State private var showingError = false
+    @State private var isImportingFile = false
 
     let columns = [
         GridItem(.adaptive(minimum: 150), spacing: 16)
@@ -60,6 +62,18 @@ struct MainLibraryView: View {
                 }
             }
             .navigationTitle("Library")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        isImportingFile = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .fileImporter(isPresented: $isImportingFile, allowedContentTypes: [.archive, .data], allowsMultipleSelection: false) { result in
+                handleFileImport(result)
+            }
             .sheet(item: $selectedParentGame) { parentGame in
                 VariantSelectionSheet(parentGame: parentGame)
             }
@@ -122,5 +136,23 @@ struct MainLibraryView: View {
 
     private func deleteGame(_ game: GameItem) {
         modelContext.delete(game)
+    }
+
+    private func handleFileImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            Task {
+                do {
+                    _ = try await documentImportService.importLocalFile(url: url, context: modelContext)
+                } catch {
+                    errorMessage = error.localizedDescription
+                    showingError = true
+                }
+            }
+        case .failure(let error):
+            errorMessage = error.localizedDescription
+            showingError = true
+        }
     }
 }

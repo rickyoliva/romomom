@@ -4,6 +4,7 @@ import SwiftData
 
 struct PatcherView: View {
     @Environment(PatcherService.self) private var patcherService
+    @Environment(DocumentImportService.self) private var documentImportService
     @Environment(\.modelContext) private var modelContext
 
     @State private var baseRomURL: URL?
@@ -12,6 +13,7 @@ struct PatcherView: View {
 
     @State private var isSelectingBaseRom = false
     @State private var isSelectingPatchFile = false
+    @State private var isImportingFile = false
     @State private var isPatching = false
 
     @State private var errorMessage: String?
@@ -68,6 +70,18 @@ struct PatcherView: View {
                 }
             }
             .navigationTitle("Patcher")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        isImportingFile = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .fileImporter(isPresented: $isImportingFile, allowedContentTypes: [.archive, .data], allowsMultipleSelection: false) { result in
+                handleFileImport(result)
+            }
             .fileImporter(isPresented: $isSelectingBaseRom, allowedContentTypes: [.data], allowsMultipleSelection: false) { result in
                 handleFileSelection(result, isBaseRom: true)
             }
@@ -153,5 +167,23 @@ struct PatcherView: View {
         patchFileURL = nil
         patchedTitle = ""
         selectedParentGame = nil
+    }
+
+    private func handleFileImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            Task {
+                do {
+                    _ = try await documentImportService.importLocalFile(url: url, context: modelContext)
+                } catch {
+                    errorMessage = error.localizedDescription
+                    showingError = true
+                }
+            }
+        case .failure(let error):
+            errorMessage = error.localizedDescription
+            showingError = true
+        }
     }
 }

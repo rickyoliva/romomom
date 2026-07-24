@@ -19,6 +19,7 @@ struct romomomApp: App {
     @State private var patcherService = PatcherService()
     @State private var sdCardStorageManager = SDCardStorageManager()
     @State private var emulatorLauncherService = EmulatorLauncherService()
+    @State private var documentImportService = DocumentImportService()
 
     var body: some Scene {
         WindowGroup {
@@ -28,5 +29,6 @@ struct romomomApp: App {
         .environment(patcherService)
         .environment(sdCardStorageManager)
         .environment(emulatorLauncherService)
+        .environment(documentImportService)
     }
 }

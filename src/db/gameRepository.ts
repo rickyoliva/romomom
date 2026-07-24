@@ -7,7 +7,8 @@ export interface Game {
     parentGameId?: string | null;
     localFilePath: string;
     customBoxArtPath?: string | null;
-    console: 'GBA' | 'NDS' | 'GBC' | 'NES' | 'SNES';
+    console: 'GBA' | 'NDS' | 'GBC' | 'NES' | 'SNES' | 'Unknown';
+    fileHash?: string | null;
     updatedAt: number;
 }
 
@@ -26,8 +27,8 @@ export const getVariantsForParent = async (parentId: string): Promise<Game[]> =>
 export const insertGame = async (game: Game): Promise<void> => {
     const db = await getDb();
     await db.runAsync(
-        `INSERT INTO games (id, title, displayType, parentGameId, localFilePath, customBoxArtPath, console, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+        `INSERT INTO games (id, title, displayType, parentGameId, localFilePath, customBoxArtPath, console, fileHash, updatedAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
             game.id,
             game.title,
@@ -36,6 +37,7 @@ export const insertGame = async (game: Game): Promise<void> => {
             game.localFilePath,
             game.customBoxArtPath || null,
             game.console,
+            game.fileHash || null,
             game.updatedAt
         ]
     );

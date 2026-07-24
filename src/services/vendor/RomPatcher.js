@@ -397,17 +397,4 @@ const RomPatcher = (function () {
 		}
 	}
 }());
-
-
-	IPS = require('./modules/RomPatcher.format.ips');
-	UPS = require('./modules/RomPatcher.format.ups');
-	APS = require('./modules/RomPatcher.format.aps_n64');
-	APSGBA = require('./modules/RomPatcher.format.aps_gba');
-	BPS = require('./modules/RomPatcher.format.bps');
-	RUP = require('./modules/RomPatcher.format.rup');
-	PPF = require('./modules/RomPatcher.format.ppf');
-	BDF = require('./modules/RomPatcher.format.bdf');
-	PMSR = require('./modules/RomPatcher.format.pmsr');
-	VCDIFF = require('./modules/RomPatcher.format.vcdiff');
-}
 export default RomPatcher;

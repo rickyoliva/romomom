@@ -9,7 +9,7 @@ export const patchRom = async (
     patchUri: string,
     outputFileName: string,
     parentId?: string,
-    consoleType: 'GBA' | 'NDS' | 'GBC' | 'NES' | 'SNES' = 'GBA'
+    consoleType: 'GBA' | 'NDS' | 'GBC' | 'NES' | 'SNES' | 'Unknown' = 'GBA'
 ): Promise<{ success: boolean; outputPath?: string; error?: string }> => {
     try {
         // Read base ROM

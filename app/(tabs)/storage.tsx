@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Button, ScrollView, Alert } from 'react-native';
 import { importFileFromPicker, listDirectoryContents, getStorageStats, StorageStats } from '../../src/services/storageService';
 import { launchGame, SupportedEmulator } from '../../src/services/emulatorLauncherService';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export default function StorageTab() {
   const [files, setFiles] = useState<string[]>([]);

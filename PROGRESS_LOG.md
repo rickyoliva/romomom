@@ -117,3 +117,18 @@ The SQLite database and the native JS patcher are complete. The patcher successf
 
 **Note to Agent 4 (Library Grid & UI Integration):**
 The core underlying services are complete (DB, Patcher, Storage, Emulator Launcher). Your job is to build the visual Library Grid (`app/(tabs)/index.tsx`). Use `getAllGames()` and `getVariantsForParent()` from the `gameRepository` to populate the list. Hook up user taps on game items to trigger `launchGame(localFilePath, emulatorScheme)` from the `emulatorLauncherService`. Ensure the UI gracefully handles both standalone and parent/child variant relationships visually.
+
+## Library & UI Component Integration (Expo / React Native)
+- Updated SQLite schema in `src/db/database.ts` to make `localFilePath` nullable and added `patchFilePath` to support missing base ROM workflows. Included a safe, transaction-based schema migration to preserve existing user data.
+- Updated `src/db/gameRepository.ts` to map to the new schema and added an `updateGame` method.
+- Built reusable UI components in `src/components/`:
+  - `GameCard.tsx`: Complex card view handling the rendering of base games. Implements missing ROM states (greyed out with a warning badge), a "Delete Everything" vs "Delete Base ROM Only" action sheet, and triggers base ROM re-attachment dialogs.
+  - `PatchModal.tsx`: A robust pageSheet modal that pre-populates base ROM details, accepts `.ips`/`.bps` patches via file picker, requests an output filename, and bridges seamlessly to the `patcherService`.
+  - `VariantList.tsx`: An inline, expandable accordion list that renders underneath a `GameCard` to display patched child variants and offers quick Launch/Delete actions.
+- Wired up all Tab navigation screens (`app/(tabs)/`):
+  - `index.tsx`: Integrates the `GameCard` inside a FlatList, manages state for parent/child variant mapping, provides search filtering, pull-to-refresh, and mounts a top-header `+ Import` button calling `storageService.importFileFromPicker()`.
+  - `patcher.tsx`: A dedicated standalone workbench tab for manually selecting arbitrary base ROMs and patches to create standalone hacks.
+  - `storage.tsx`: Enhanced the storage manager tab to specifically list files within `ROMS_DIR`, providing transparency and manual physical file deletion tied into the `FileSystem`.
+
+**Note to Agent 5 (Remote API Repository & Download Manager):**
+The primary offline library and UI views are complete. The `GameCard` correctly handles cases where a base ROM file is missing (e.g., deleted to save space) while retaining its variants. As you implement remote downloads, ensure that downloaded ROMs or patches cleanly map back to these structures. If a user downloads a base ROM they previously deleted, update the existing `Game` record's `localFilePath` via `updateGame` rather than creating a duplicate entry.

@@ -10,6 +10,8 @@ export default function StorageTab() {
 
   const loadData = async () => {
     const dirFiles = await listDirectoryContents();
+    // Filter to only show actual ROM files (files not ending with db or other internal types, optional depending on listDirectoryContents implementation)
+    // listDirectoryContents already strictly looks at ROMS_DIR so this is clean.
     setFiles(dirFiles);
     const storageStats = await getStorageStats();
     setStats(storageStats);
@@ -75,6 +77,11 @@ export default function StorageTab() {
             <View key={index} style={styles.fileItem}>
               <Text style={styles.fileName}>{file}</Text>
               <Button title="Launch / Share" onPress={() => handleLaunch(file)} />
+              <Button title="Del" color="red" onPress={async () => {
+                const localFilePath = FileSystem.documentDirectory + 'roms/' + file;
+                await FileSystem.deleteAsync(localFilePath, { idempotent: true });
+                loadData();
+              }} />
             </View>
           ))
         )}

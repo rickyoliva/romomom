@@ -5,7 +5,8 @@ export interface Game {
     title: string;
     displayType: 'baseParent' | 'standaloneHack' | 'variant';
     parentGameId?: string | null;
-    localFilePath: string;
+    localFilePath?: string | null;
+    patchFilePath?: string | null;
     customBoxArtPath?: string | null;
     console: 'GBA' | 'NDS' | 'GBC' | 'NES' | 'SNES' | 'Unknown';
     fileHash?: string | null;
@@ -27,18 +28,38 @@ export const getVariantsForParent = async (parentId: string): Promise<Game[]> =>
 export const insertGame = async (game: Game): Promise<void> => {
     const db = await getDb();
     await db.runAsync(
-        `INSERT INTO games (id, title, displayType, parentGameId, localFilePath, customBoxArtPath, console, fileHash, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        `INSERT INTO games (id, title, displayType, parentGameId, localFilePath, patchFilePath, customBoxArtPath, console, fileHash, updatedAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
             game.id,
             game.title,
             game.displayType,
             game.parentGameId || null,
-            game.localFilePath,
+            game.localFilePath || null,
+            game.patchFilePath || null,
             game.customBoxArtPath || null,
             game.console,
             game.fileHash || null,
             game.updatedAt
+        ]
+    );
+};
+
+export const updateGame = async (game: Game): Promise<void> => {
+    const db = await getDb();
+    await db.runAsync(
+        `UPDATE games SET title = ?, displayType = ?, parentGameId = ?, localFilePath = ?, patchFilePath = ?, customBoxArtPath = ?, console = ?, fileHash = ?, updatedAt = ? WHERE id = ?;`,
+        [
+            game.title,
+            game.displayType,
+            game.parentGameId || null,
+            game.localFilePath || null,
+            game.patchFilePath || null,
+            game.customBoxArtPath || null,
+            game.console,
+            game.fileHash || null,
+            game.updatedAt,
+            game.id
         ]
     );
 };

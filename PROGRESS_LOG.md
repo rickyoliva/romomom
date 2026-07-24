@@ -78,3 +78,19 @@ The core UI flows, tab navigation, and `.fileImporter` file pickers are fully op
 
 **Note to Agent 7 (Remote API Repository & Download Manager):**
 The manual document import handling is complete. When you build the remote download manager to fetch files, note that you can reuse logic (or interface with) `DocumentImportService` if you end up downloading zipped or compressed ROMs/patches to process them identically. Ensure any network connections you implement account for correct SwiftData threaded execution contexts.
+
+## Pivot to React Native / Expo (Cross-Platform)
+- Updated `AGENTS.md` to establish new architecture guidelines based on React Native, Expo SDK 51+, TypeScript, and Expo Router.
+- Initialized a new Expo blank-typescript project in the repository root.
+- Kept the original `romomom` folder containing the Swift/SwiftUI implementation for reference.
+- Installed required Expo modules (`expo-file-system`, `expo-document-picker`, `expo-sqlite`, `expo-sharing`, `expo-linking`, `expo-router`).
+- Configured Expo Router entry point in `package.json` and deleted `App.tsx`/`index.ts`.
+- Set up foundational file-based navigation in `app/`:
+  - `app/_layout.tsx` (Root Layout)
+  - `app/(tabs)/_layout.tsx` (Tab Configuration)
+  - `app/(tabs)/index.tsx` (Library Tab)
+  - `app/(tabs)/storage.tsx` (Storage Tab)
+  - `app/(tabs)/patcher.tsx` (Patcher Tab)
+
+**Note to Agent 2 (Core Data Schema & Direct JS Patcher):**
+The Expo environment is initialized and ready. Your primary task is to port the SwiftData `GameItem` schema over to `expo-sqlite` (or a chosen state wrapper like Zustand if you prefer purely local app sandbox storage without sqlite). Additionally, you must implement the direct JavaScript patching service. Note the architecture rule change: we no longer use a hidden WebView (`WKWebView`). `RomPatcher.js` must be adapted or executed natively in the React Native JS thread.

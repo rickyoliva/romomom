@@ -3,7 +3,7 @@ export interface RemoteRepoItem {
   title: string;
   author: string;
   description: string;
-  console: 'GBA' | 'NDS' | 'GBC' | 'NES' | 'SNES' | 'Unknown';
+  console: 'GBA' | 'NDS' | '3DS' | 'GBC' | 'NES' | 'SNES' | 'Unknown';
   downloadUrl: string;
   fileType: 'patch' | 'homebrew';
   version?: string;

@@ -8,7 +8,7 @@ export interface Game {
     localFilePath?: string | null;
     patchFilePath?: string | null;
     customBoxArtPath?: string | null;
-    console: 'GBA' | 'NDS' | 'GBC' | 'NES' | 'SNES' | 'Unknown';
+    console: 'GBA' | 'NDS' | '3DS' | 'GBC' | 'NES' | 'SNES' | 'Unknown';
     fileHash?: string | null;
     updatedAt: number;
 }

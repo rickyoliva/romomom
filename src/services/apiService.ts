@@ -1,7 +1,5 @@
 import { RemoteRepoItem } from '../types/repository';
 
-const API_URL = 'https://db.universal-team.net/data/full.json';
-
 const mapSystemToConsole = (systems: string[]): RemoteRepoItem['console'] => {
   if (!systems || systems.length === 0) return 'Unknown';
 
@@ -12,21 +10,22 @@ const mapSystemToConsole = (systems: string[]): RemoteRepoItem['console'] => {
     if (s.includes('GBC')) return 'GBC';
     if (s.includes('NES') && !s.includes('SNES')) return 'NES';
     if (s.includes('SNES')) return 'SNES';
+    if (s.includes('3DS')) return '3DS';
   }
   return 'Unknown';
 };
 
 const determineFileType = (url: string): 'patch' | 'homebrew' => {
   const lowerUrl = url.toLowerCase();
-  if (lowerUrl.endsWith('.ips') || lowerUrl.endsWith('.bps') || lowerUrl.endsWith('.xdelta')) {
+  if (lowerUrl.endsWith('.ips') || lowerUrl.endsWith('.bps') || lowerUrl.endsWith('.xdelta') || lowerUrl.endsWith('.ups') || lowerUrl.endsWith('.aps') || lowerUrl.endsWith('.ppf') || lowerUrl.endsWith('.ebp')) {
     return 'patch';
   }
   return 'homebrew'; // Defaulting to homebrew for generic roms/archives
 };
 
-export const fetchRepositoryItems = async (): Promise<RemoteRepoItem[]> => {
+export const fetchRepositoryItems = async (apiUrl: string = 'https://db.universal-team.net/data/full.json'): Promise<RemoteRepoItem[]> => {
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch(apiUrl);
     if (!response.ok) {
       console.warn('Network request failed:', response.statusText);
       return [];

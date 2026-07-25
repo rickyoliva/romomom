@@ -1,10 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Image, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Image, Alert, TextInput, ScrollView, Modal } from 'react-native';
 import { RemoteRepoItem } from '../../src/types/repository';
 import { fetchRepositoryItems } from '../../src/services/apiService';
 import { downloadItem } from '../../src/services/downloadService';
 import { getAllGames, Game } from '../../src/db/gameRepository';
 import { patchRom } from '../../src/services/patcherService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const DEFAULT_REPO = 'https://db.universal-team.net/data/full.json';
+const REPO_STORAGE_KEY = 'discover_repositories';
 
 export default function DiscoverScreen() {
   const [items, setItems] = useState<RemoteRepoItem[]>([]);
@@ -18,15 +22,76 @@ export default function DiscoverScreen() {
   const [showBaseSelector, setShowBaseSelector] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Filters
+  const [platformFilter, setPlatformFilter] = useState('All');
+  const [typeFilter, setTypeFilter] = useState('All');
+  const [genreFilter, setGenreFilter] = useState('All');
+
+  // Repositories
+  const [repositories, setRepositories] = useState<string[]>([DEFAULT_REPO]);
+  const [showRepoManager, setShowRepoManager] = useState(false);
+  const [newRepoUrl, setNewRepoUrl] = useState('');
+
   useEffect(() => {
-    loadItems();
+    loadRepositories().then((repos) => {
+        loadItems(repos);
+    });
   }, []);
 
-  const loadItems = async () => {
+  const loadRepositories = async () => {
+    try {
+        const storedRepos = await AsyncStorage.getItem(REPO_STORAGE_KEY);
+        if (storedRepos) {
+            const parsed = JSON.parse(storedRepos);
+            setRepositories(parsed);
+            return parsed;
+        }
+    } catch (e) {
+        console.error('Failed to load repositories', e);
+    }
+    return repositories;
+  };
+
+  const saveRepositories = async (repos: string[]) => {
+      try {
+          await AsyncStorage.setItem(REPO_STORAGE_KEY, JSON.stringify(repos));
+          setRepositories(repos);
+      } catch (e) {
+          console.error('Failed to save repositories', e);
+      }
+  };
+
+  const loadItems = async (reposToLoad = repositories) => {
     setLoading(true);
-    const fetchedItems = await fetchRepositoryItems();
-    setItems(fetchedItems);
+    let allItems: RemoteRepoItem[] = [];
+    for (const repoUrl of reposToLoad) {
+        const fetchedItems = await fetchRepositoryItems(repoUrl);
+        allItems = [...allItems, ...fetchedItems];
+    }
+    setItems(allItems);
     setLoading(false);
+  };
+
+  const addRepository = async () => {
+      if (!newRepoUrl) return;
+      if (repositories.includes(newRepoUrl)) {
+          Alert.alert('Repository already exists');
+          return;
+      }
+      const updatedRepos = [...repositories, newRepoUrl];
+      await saveRepositories(updatedRepos);
+      setNewRepoUrl('');
+      loadItems(updatedRepos);
+  };
+
+  const removeRepository = async (repoToRemove: string) => {
+      if (repositories.length <= 1) {
+          Alert.alert('Cannot remove the last repository');
+          return;
+      }
+      const updatedRepos = repositories.filter(repo => repo !== repoToRemove);
+      await saveRepositories(updatedRepos);
+      loadItems(updatedRepos);
   };
 
   const handleDownload = async (item: RemoteRepoItem) => {
@@ -72,13 +137,35 @@ export default function DiscoverScreen() {
   };
 
   const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return items;
-    return items.filter(item =>
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [items, searchQuery]);
+    let result = items;
+
+    if (platformFilter !== 'All') {
+        result = result.filter(item => item.console === platformFilter);
+    }
+
+    if (typeFilter !== 'All') {
+        result = result.filter(item => item.fileType === typeFilter.toLowerCase());
+    }
+
+    if (genreFilter !== 'All') {
+        // Very basic mock checking since our remote structure is simple right now
+        // It relies on keywords in description/title for filtering genres
+        result = result.filter(item => {
+           const searchArea = (item.description + ' ' + item.title).toLowerCase();
+           const genre = genreFilter.toLowerCase();
+           return searchArea.includes(genre);
+        });
+    }
+
+    if (searchQuery.trim()) {
+        result = result.filter(item =>
+            item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.description.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }
+    return result;
+  }, [items, searchQuery, platformFilter, typeFilter, genreFilter]);
 
   const applyPatchToBase = async (baseGame: Game) => {
     if (!pendingPatchGame || !pendingPatchGame.localFilePath || !baseGame.localFilePath) return;
@@ -140,46 +227,124 @@ export default function DiscoverScreen() {
     </View>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading repositories...</Text>
-      </View>
-    );
-  }
+  const FilterPill = ({ label, current, onSelect }: { label: string, current: string, onSelect: (val: string) => void }) => (
+      <Pressable
+          style={[styles.filterPill, current === label && styles.filterPillActive]}
+          onPress={() => onSelect(label)}
+      >
+          <Text style={[styles.filterPillText, current === label && styles.filterPillTextActive]}>{label}</Text>
+      </Pressable>
+  );
 
   return (
     <View style={styles.container}>
-      {items.length === 0 ? (
+      <View style={styles.headerContainer}>
+        <View style={styles.searchContainer}>
+            <TextInput
+                style={styles.searchInput}
+                placeholder="Search repositories..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="none"
+                autoCorrect={false}
+            />
+            <Pressable style={styles.manageRepoButton} onPress={() => setShowRepoManager(true)}>
+                <Text style={styles.manageRepoText}>⚙️</Text>
+            </Pressable>
+        </View>
+
+        <View style={styles.filtersWrapper}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersScroll}>
+                <Text style={styles.filterLabel}>Platform:</Text>
+                <FilterPill label="All" current={platformFilter} onSelect={setPlatformFilter} />
+                <FilterPill label="GBA" current={platformFilter} onSelect={setPlatformFilter} />
+                <FilterPill label="NDS" current={platformFilter} onSelect={setPlatformFilter} />
+                <FilterPill label="3DS" current={platformFilter} onSelect={setPlatformFilter} />
+                <FilterPill label="NES" current={platformFilter} onSelect={setPlatformFilter} />
+                <FilterPill label="SNES" current={platformFilter} onSelect={setPlatformFilter} />
+            </ScrollView>
+        </View>
+        <View style={styles.filtersWrapper}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersScroll}>
+                <Text style={styles.filterLabel}>Content:</Text>
+                <FilterPill label="All" current={typeFilter} onSelect={setTypeFilter} />
+                <FilterPill label="Patch" current={typeFilter} onSelect={setTypeFilter} />
+                <FilterPill label="Homebrew" current={typeFilter} onSelect={setTypeFilter} />
+            </ScrollView>
+        </View>
+        <View style={styles.filtersWrapper}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersScroll}>
+                <Text style={styles.filterLabel}>Genre:</Text>
+                <FilterPill label="All" current={genreFilter} onSelect={setGenreFilter} />
+                <FilterPill label="Tools" current={genreFilter} onSelect={setGenreFilter} />
+                <FilterPill label="Games" current={genreFilter} onSelect={setGenreFilter} />
+                <FilterPill label="Mods" current={genreFilter} onSelect={setGenreFilter} />
+                <FilterPill label="Entertainment" current={genreFilter} onSelect={setGenreFilter} />
+            </ScrollView>
+        </View>
+      </View>
+
+      {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>Loading repositories...</Text>
+          </View>
+      ) : items.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.errorText}>Unable to load repository / Offline</Text>
-          <Pressable style={styles.retryButton} onPress={loadItems}>
+          <Text style={styles.errorText}>No items found</Text>
+          <Pressable style={styles.retryButton} onPress={() => loadItems()}>
             <Text style={styles.retryText}>Retry</Text>
           </Pressable>
         </View>
       ) : (
-        <>
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search repositories..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-          <FlatList
-            data={filteredItems}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            contentContainerStyle={styles.listContent}
-          />
-        </>
+        <FlatList
+          data={filteredItems}
+          keyExtractor={(item, index) => item.id + index}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+        />
       )}
 
-      {/* Very basic base ROM selector modal logic */}
+      {/* Repository Manager Modal */}
+      <Modal visible={showRepoManager} transparent animationType="slide">
+          <View style={styles.selectorOverlay}>
+              <View style={styles.repoModal}>
+                  <Text style={styles.selectorTitle}>Manage Repositories</Text>
+
+                  <FlatList
+                      data={repositories}
+                      keyExtractor={item => item}
+                      renderItem={({item}) => (
+                          <View style={styles.repoItem}>
+                              <Text style={styles.repoItemText} numberOfLines={1} ellipsizeMode="middle">{item}</Text>
+                              <Pressable onPress={() => removeRepository(item)}>
+                                  <Text style={styles.removeRepoText}>Remove</Text>
+                              </Pressable>
+                          </View>
+                      )}
+                  />
+
+                  <View style={styles.addRepoContainer}>
+                      <TextInput
+                          style={styles.addRepoInput}
+                          placeholder="https://...manifest.json"
+                          value={newRepoUrl}
+                          onChangeText={setNewRepoUrl}
+                          autoCapitalize="none"
+                      />
+                      <Pressable style={styles.addRepoButton} onPress={addRepository}>
+                          <Text style={styles.addRepoButtonText}>Add</Text>
+                      </Pressable>
+                  </View>
+
+                  <Pressable style={styles.cancelButton} onPress={() => setShowRepoManager(false)}>
+                      <Text style={styles.cancelText}>Close</Text>
+                  </Pressable>
+              </View>
+          </View>
+      </Modal>
+
+      {/* Base ROM selector modal logic */}
       {showBaseSelector && (
         <View style={styles.selectorOverlay}>
           <View style={styles.selectorModal}>
@@ -208,6 +373,65 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  headerContainer: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    paddingBottom: 8,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    padding: 16,
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    fontSize: 16,
+    color: '#333',
+  },
+  manageRepoButton: {
+    marginLeft: 12,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+  },
+  manageRepoText: {
+    fontSize: 18,
+  },
+  filtersWrapper: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  filtersScroll: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  filterLabel: {
+    fontWeight: 'bold',
+    marginRight: 4,
+    color: '#666',
+  },
+  filterPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 16,
+  },
+  filterPillActive: {
+    backgroundColor: '#007AFF',
+  },
+  filterPillText: {
+    color: '#333',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  filterPillTextActive: {
+    color: '#fff',
+  },
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -231,20 +455,6 @@ const styles = StyleSheet.create({
   retryText: {
     color: '#fff',
     fontWeight: 'bold',
-  },
-  searchContainer: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  searchInput: {
-    backgroundColor: '#f5f5f5',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    fontSize: 16,
-    color: '#333',
   },
   listContent: {
     padding: 16,
@@ -356,10 +566,18 @@ const styles = StyleSheet.create({
     width: '100%',
     maxHeight: '80%',
   },
+  repoModal: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '100%',
+    height: '60%',
+  },
   selectorTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
+    textAlign: 'center',
   },
   selectorItem: {
     paddingVertical: 12,
@@ -368,6 +586,44 @@ const styles = StyleSheet.create({
   },
   selectorItemText: {
     fontSize: 16,
+  },
+  repoItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: '#eee',
+      alignItems: 'center',
+  },
+  repoItemText: {
+      flex: 1,
+      marginRight: 8,
+  },
+  removeRepoText: {
+      color: '#FF3B30',
+      fontWeight: 'bold',
+  },
+  addRepoContainer: {
+      flexDirection: 'row',
+      marginTop: 16,
+  },
+  addRepoInput: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: '#ddd',
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      marginRight: 8,
+  },
+  addRepoButton: {
+      backgroundColor: '#34C759',
+      justifyContent: 'center',
+      paddingHorizontal: 16,
+      borderRadius: 8,
+  },
+  addRepoButtonText: {
+      color: '#fff',
+      fontWeight: 'bold',
   },
   cancelButton: {
     marginTop: 16,

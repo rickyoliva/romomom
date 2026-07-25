@@ -12,8 +12,6 @@ export default function StorageTab() {
 
   const loadData = async () => {
     const dirFiles = await listDirectoryContents();
-    // Filter to only show actual ROM files (files not ending with db or other internal types, optional depending on listDirectoryContents implementation)
-    // listDirectoryContents already strictly looks at ROMS_DIR so this is clean.
     setFiles(dirFiles);
     const storageStats = await getStorageStats();
     setStats(storageStats);
@@ -37,7 +35,6 @@ export default function StorageTab() {
 
   const handleLaunch = async (fileName: string) => {
     const localFilePath = FileSystem.documentDirectory + 'roms/' + fileName;
-    // Launching without a specific emulator scheme will fall back to Share Sheet for testing purposes
     const result = await launchGame(localFilePath);
     if (!result.success) {
       Alert.alert('Launch Error', result.error);
@@ -65,6 +62,28 @@ export default function StorageTab() {
       return ext;
     }
     return 'FILE';
+  };
+
+  const getBadgeColor = (ext: string) => {
+      switch (ext) {
+          case 'NDS': return '#E53935';
+          case '3DS': return '#D32F2F';
+          case 'GBA': return '#8E24AA';
+          case 'GBC': return '#5E35B1';
+          case 'NES': return '#3949AB';
+          case 'SNES': return '#1E88E5';
+          case 'IPS':
+          case 'BPS':
+          case 'UPS':
+          case 'APS':
+          case 'PPF':
+          case 'RUP':
+          case 'VCDIFF':
+          case 'XDELTA':
+          case 'EBP':
+              return '#43A047';
+          default: return '#757575';
+      }
   };
 
   const formatBytes = (bytes: number) => {
@@ -100,25 +119,28 @@ export default function StorageTab() {
         {files.length === 0 ? (
           <Text>No files found.</Text>
         ) : (
-          files.map((file, index) => (
-            <View key={index} style={styles.fileItem}>
-              <View style={styles.fileInfo}>
-                <View style={styles.badgeContainer}>
-                  <Text style={styles.badgeText}>{getFileBadge(file)}</Text>
+          files.map((file, index) => {
+            const ext = getFileBadge(file);
+            return (
+              <View key={index} style={styles.fileItem}>
+                <View style={styles.fileInfo}>
+                  <View style={[styles.badgeContainer, { backgroundColor: getBadgeColor(ext) }]}>
+                    <Text style={styles.badgeText}>{ext}</Text>
+                  </View>
+                  <Text style={styles.fileName} numberOfLines={1} ellipsizeMode="middle">{file}</Text>
                 </View>
-                <Text style={styles.fileName} numberOfLines={1} ellipsizeMode="middle">{file}</Text>
+                <View style={styles.fileActions}>
+                  <Button title="Share" onPress={() => handleShare(file)} />
+                  <Button title="Launch" onPress={() => handleLaunch(file)} />
+                  <Button title="Del" color="red" onPress={async () => {
+                    const localFilePath = FileSystem.documentDirectory + 'roms/' + file;
+                    await FileSystem.deleteAsync(localFilePath, { idempotent: true });
+                    loadData();
+                  }} />
+                </View>
               </View>
-              <View style={styles.fileActions}>
-                <Button title="Share" onPress={() => handleShare(file)} />
-                <Button title="Launch" onPress={() => handleLaunch(file)} />
-                <Button title="Del" color="red" onPress={async () => {
-                  const localFilePath = FileSystem.documentDirectory + 'roms/' + file;
-                  await FileSystem.deleteAsync(localFilePath, { idempotent: true });
-                  loadData();
-                }} />
-              </View>
-            </View>
-          ))
+            );
+          })
         )}
       </View>
     </ScrollView>
@@ -160,11 +182,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   badgeContainer: {
-    backgroundColor: '#007AFF',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     marginRight: 10,
+    minWidth: 45,
+    alignItems: 'center',
   },
   badgeText: {
     color: '#fff',

@@ -14,6 +14,22 @@ interface GameCardProps {
     onAttachBaseRom: (id: string, fileUri: string, fileName: string) => Promise<boolean>;
 }
 
+
+
+
+
+const getBadgeColor = (ext: string) => {
+    switch (ext.toUpperCase()) {
+        case 'NDS': return '#E53935';
+        case '3DS': return '#D32F2F';
+        case 'GBA': return '#8E24AA';
+        case 'GBC': return '#5E35B1';
+        case 'NES': return '#3949AB';
+        case 'SNES': return '#1E88E5';
+        default: return '#757575';
+    }
+};
+
 export const GameCard: React.FC<GameCardProps> = ({ game, variants = [], onDeleteGame, onRefresh, onAttachBaseRom }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [patchModalVisible, setPatchModalVisible] = useState(false);
@@ -85,10 +101,18 @@ export const GameCard: React.FC<GameCardProps> = ({ game, variants = [], onDelet
         <View style={styles.container}>
             <View style={[styles.card, isMissingBaseRom && styles.cardDisabled]}>
                 <View style={styles.cardHeader}>
+
                     <View style={styles.titleContainer}>
-                        <Text style={[styles.title, isMissingBaseRom && styles.textDisabled]}>{game.title}</Text>
-                        <Text style={[styles.consoleTag, isMissingBaseRom && styles.textDisabled]}>{game.console}</Text>
+                        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                            <Text style={[styles.title, isMissingBaseRom && styles.textDisabled]}>{game.title}</Text>
+                            {game.console !== 'Unknown' && (
+                                <View style={[styles.consoleBadge, { backgroundColor: getBadgeColor(game.console) }]}>
+                                    <Text style={styles.consoleBadgeText}>{game.console}</Text>
+                                </View>
+                            )}
+                        </View>
                         {isMissingBaseRom && (
+
                             <View style={styles.warningBadge}>
                                 <Text style={styles.warningText}>No Base ROM</Text>
                             </View>
@@ -188,16 +212,20 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 4,
     },
-    consoleTag: {
-        fontSize: 12,
-        color: '#666',
-        backgroundColor: '#eee',
-        alignSelf: 'flex-start',
-        paddingHorizontal: 6,
+
+    consoleBadge: {
+        marginLeft: 8,
+        paddingHorizontal: 8,
         paddingVertical: 2,
-        borderRadius: 4,
-        overflow: 'hidden',
+        borderRadius: 12,
+        justifyContent: 'center',
     },
+    consoleBadgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
+
     textDisabled: {
         color: '#999',
     },

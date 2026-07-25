@@ -1,4 +1,4 @@
-import BinFile from './BinFile';
+import BinFile from './BinFile.js';
 /* IPS module for Rom Patcher JS v20250430 - Marc Robledo 2016-2025 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.smwiki.net/wiki/IPS_file_format */
 

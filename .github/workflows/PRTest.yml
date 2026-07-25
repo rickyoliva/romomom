@@ -27,4 +27,33 @@ jobs:
         run: npx tsc --noEmit
 
       - name: 🧪 Test JS Bundle Export (Dry Run)
-        run: npx expo export --platform ios
+        id: bundle
+        run: |
+          mkdir -p build_logs
+          npx expo export --platform ios 2>&1 | tee build_logs/bundle_error.log
+
+      - name: 💬 Comment Error on PR for Jules
+        if: failure() && steps.bundle.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let logContent = 'Unknown bundling failure.';
+            try {
+              logContent = fs.readFileSync('build_logs/bundle_error.log', 'utf8');
+              // Trim to fit inside GitHub comment character limits if necessary
+              if (logContent.length > 3000) {
+                logContent = logContent.slice(-3000);
+              }
+            } catch (e) {
+              console.error('Could not read log file:', e);
+            }
+
+            const body = `🚨 **PR Verification Failed**\n\n@Jules Please review the bundling/compilation error below and submit a fix:\n\n\`\`\`text\n${logContent}\n\`\`\``;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

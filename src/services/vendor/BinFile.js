@@ -477,9 +477,9 @@ BinFile.prototype.hashCRC16 = function (start, len) {
 
 if (BinFile.RUNTIME_ENVIROMENT === 'node' && typeof module !== 'undefined' && module.exports) {
 	module.exports = BinFile;
-	HashCalculator = require('./HashCalculator');
-	nodePath = require('path');
-	nodeFs = require('fs');
+	// HashCalculator = require('./HashCalculator');
+	// nodePath = require('path');
+	// nodeFs = require('fs');
 }
 
 export default BinFile;

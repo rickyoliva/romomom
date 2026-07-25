@@ -1,10 +1,7 @@
 name: EAS Build iOS
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+  workflow_dispatch: # Manual trigger only via GitHub Actions tab
 
 jobs:
   build:

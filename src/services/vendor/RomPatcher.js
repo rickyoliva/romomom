@@ -1,6 +1,13 @@
-import BinFile from './BinFile';
-import IPS from './RomPatcher.format.ips';
-import BPS from './RomPatcher.format.bps';
+import BinFile from './BinFile.js';
+import IPS from './RomPatcher.format.ips.js';
+import BPS from './RomPatcher.format.bps.js';
+import UPS from './RomPatcher.format.ups.js';
+import APS from './RomPatcher.format.aps_n64.js';
+import APSGBA from './RomPatcher.format.aps_gba.js';
+import PPF from './RomPatcher.format.ppf.js';
+import RUP from './RomPatcher.format.rup.js';
+import VCDIFF from './RomPatcher.format.vcdiff.js';
+
 /*
 * Rom Patcher JS core
 * A ROM patcher/builder made in JavaScript, can be implemented as a webapp or a Node.JS CLI tool
@@ -112,6 +119,8 @@ const RomPatcher = (function () {
 				patch = APSGBA.fromFile(patchFile);
 			} else if (header.startsWith(BPS.MAGIC)) {
 				patch = BPS.fromFile(patchFile);
+			} else if (header.startsWith(VCDIFF.MAGIC)) {
+				patch = VCDIFF.fromFile(patchFile);
 			} else if (header.startsWith(RUP.MAGIC)) {
 				patch = RUP.fromFile(patchFile);
 			} else if (header.startsWith(PPF.MAGIC)) {

@@ -1,4 +1,4 @@
-import BinFile from './BinFile';
+import BinFile from './BinFile.js';
 /* BPS module for Rom Patcher JS v20240821 - Marc Robledo 2016-2024 - http://www.marcrobledo.com/license */
 /* File format specification: https://www.romhacking.net/documents/746/ */
 

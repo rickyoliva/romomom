@@ -9,7 +9,7 @@ export const patchRom = async (
     patchUri: string,
     outputFileName: string,
     parentId?: string,
-    consoleType: 'GBA' | 'NDS' | 'GBC' | 'NES' | 'SNES' | 'Unknown' = 'GBA'
+    consoleType: 'GBA' | 'NDS' | '3DS' | 'GBC' | 'NES' | 'SNES' | 'Unknown' = 'GBA'
 ): Promise<{ success: boolean; outputPath?: string; error?: string }> => {
     try {
         // Read base ROM
@@ -23,7 +23,8 @@ export const patchRom = async (
         const patchFile = new BinFile(new Uint8Array(patchBuffer));
 
         // Apply patch
-        const patchedRomFile = RomPatcher.applyPatch(baseRomFile, patchFile);
+        const parsedPatch = RomPatcher.parsePatchFile(patchFile);
+        const patchedRomFile = RomPatcher.applyPatch(baseRomFile, parsedPatch);
         if (!patchedRomFile) {
             return { success: false, error: 'Failed to apply patch.' };
         }

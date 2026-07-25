@@ -9,7 +9,10 @@
     "scheme": "romomom",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "au.oliva.romomom"
+      "bundleIdentifier": "au.oliva.romomom",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {

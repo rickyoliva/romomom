@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Button, ScrollView, Alert } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { importFileFromPicker, listDirectoryContents, getStorageStats, StorageStats } from '../../src/services/storageService';
 import { launchGame, SupportedEmulator } from '../../src/services/emulatorLauncherService';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 
 export default function StorageTab() {
   const [files, setFiles] = useState<string[]>([]);
@@ -17,9 +19,11 @@ export default function StorageTab() {
     setStats(storageStats);
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   const handleImport = async () => {
     const result = await importFileFromPicker();
@@ -38,6 +42,29 @@ export default function StorageTab() {
     if (!result.success) {
       Alert.alert('Launch Error', result.error);
     }
+  };
+
+  const handleShare = async (fileName: string) => {
+    const localFilePath = FileSystem.documentDirectory + 'roms/' + fileName;
+    try {
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (isAvailable) {
+        await Sharing.shareAsync(localFilePath);
+      } else {
+        Alert.alert('Sharing Unavailable', 'Sharing is not available on this device.');
+      }
+    } catch (e) {
+      Alert.alert('Share Error', 'Could not share file.');
+    }
+  };
+
+  const getFileBadge = (fileName: string) => {
+    const parts = fileName.split('.');
+    if (parts.length > 1) {
+      const ext = parts[parts.length - 1].toUpperCase();
+      return ext;
+    }
+    return 'FILE';
   };
 
   const formatBytes = (bytes: number) => {
@@ -75,13 +102,21 @@ export default function StorageTab() {
         ) : (
           files.map((file, index) => (
             <View key={index} style={styles.fileItem}>
-              <Text style={styles.fileName}>{file}</Text>
-              <Button title="Launch / Share" onPress={() => handleLaunch(file)} />
-              <Button title="Del" color="red" onPress={async () => {
-                const localFilePath = FileSystem.documentDirectory + 'roms/' + file;
-                await FileSystem.deleteAsync(localFilePath, { idempotent: true });
-                loadData();
-              }} />
+              <View style={styles.fileInfo}>
+                <View style={styles.badgeContainer}>
+                  <Text style={styles.badgeText}>{getFileBadge(file)}</Text>
+                </View>
+                <Text style={styles.fileName} numberOfLines={1} ellipsizeMode="middle">{file}</Text>
+              </View>
+              <View style={styles.fileActions}>
+                <Button title="Share" onPress={() => handleShare(file)} />
+                <Button title="Launch" onPress={() => handleLaunch(file)} />
+                <Button title="Del" color="red" onPress={async () => {
+                  const localFilePath = FileSystem.documentDirectory + 'roms/' + file;
+                  await FileSystem.deleteAsync(localFilePath, { idempotent: true });
+                  loadData();
+                }} />
+              </View>
             </View>
           ))
         )}
@@ -113,15 +148,36 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   fileItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
   },
+  fileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  badgeContainer: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 10,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   fileName: {
     flex: 1,
-    marginRight: 10,
+    fontSize: 16,
+  },
+  fileActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
   },
 });

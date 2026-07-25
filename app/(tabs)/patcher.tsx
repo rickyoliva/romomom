@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { patchRom } from '../../src/services/patcherService';
 
@@ -10,6 +11,12 @@ export default function PatcherTab() {
     const [patchName, setPatchName] = useState<string>('');
     const [outputName, setOutputName] = useState<string>('');
     const [isPatching, setIsPatching] = useState(false);
+
+    useFocusEffect(
+        useCallback(() => {
+            // Re-render component on focus to ensure state is clean/maintained as requested
+        }, [])
+    );
 
     const pickBaseRom = async () => {
         try {

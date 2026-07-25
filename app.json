@@ -8,7 +8,8 @@
     "userInterfaceStyle": "light",
     "scheme": "romomom",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "au.oliva.romomom"
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +18,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "au.oliva.romomom"
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -33,7 +33,7 @@ UPS.prototype.export=function(fileName){
 	}
 	patchFileSize+=12; //input/output/patch checksums
 
-	tempFile=new BinFile(patchFileSize);
+	var tempFile=new BinFile(patchFileSize);
 	tempFile.writeVLV=UPS_writeVLV;
 	tempFile.fileName=fileName+'.ups';
 	tempFile.writeString(UPS_MAGIC);
@@ -67,8 +67,8 @@ UPS.prototype.apply=function(romFile, validate){
 
 	/* fix the glitch that cut the end of the file if it's larger than the changed file patch was originally created with */
 	/* more info: https://github.com/marcrobledo/RomPatcher.js/pull/40#issuecomment-1069087423 */
-	sizeOutput = this.sizeOutput;
-	sizeInput = this.sizeInput;
+	var sizeOutput = this.sizeOutput;
+	var sizeInput = this.sizeInput;
 	if(!validate && sizeInput < romFile.fileSize){
 		sizeInput = romFile.fileSize;
 		if(sizeOutput < sizeInput){
@@ -77,7 +77,7 @@ UPS.prototype.apply=function(romFile, validate){
 	}
 
 	/* copy original file */
-	tempFile=new BinFile(sizeOutput);
+	var tempFile=new BinFile(sizeOutput);
 	romFile.copyTo(tempFile, 0, sizeInput);
 
 	romFile.seek(0);

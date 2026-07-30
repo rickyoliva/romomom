@@ -362,7 +362,7 @@ const RomPatcher = (function () {
 					newChecksum = ((newChecksum - romFile.readU8() - 1) >>> 0) & 0xff;
 				}
 
-				/* fix checksum */
+				/* correct checksum */
 				if (currentChecksum !== newChecksum) {
 					console.log('fixed Game Boy checksum');
 					romFile.seek(0x014d);
@@ -382,7 +382,7 @@ const RomPatcher = (function () {
 					newChecksum = ((newChecksum + romFile.readU16()) >>> 0) & 0xffff;
 				}
 
-				/* fix checksum */
+				/* correct checksum */
 				if (currentChecksum !== newChecksum) {
 					console.log('fixed Megadrive/Genesis checksum');
 					romFile.seek(0x018e);
